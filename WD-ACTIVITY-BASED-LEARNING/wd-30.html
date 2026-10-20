@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#d5d4da">
+  <title>BusGo — Find your seat</title>
+  <style>
+    :root {
+      --ink: #313943;
+      --muted: #858982;
+      --line: #e7e5dc;
+      --green: #58c866;
+      --green-dark: #268f49;
+      --coral: #ef846e;
+      --cream: #f7f3e5;
+      --surface: #fffdf6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      background: #171819;
+      color: var(--ink);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 3px solid #9cdb8a;
+      outline-offset: 2px;
+    }
+    .app {
+      position: relative;
+      display: grid;
+      width: min(1370px, 100%);
+      min-height: 710px;
+      grid-template-columns: 54px minmax(0, 1fr) 318px;
+      overflow: hidden;
+      border: 1px solid #ffffffb0;
+      border-radius: 25px;
+      background:
+        radial-gradient(ellipse at 8% 90%, #b0d89a 0, transparent 36%),
+        radial-gradient(ellipse at 56% 92%, #e6b19a 0, transparent 42%),
+        linear-gradient(125deg, #d9e9c1, #f3e8d4 50%, #eed0bc);
+      box-shadow: 0 22px 80px #0008;
+    }
+    .rail {
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 11px;
+      padding: 16px 0 13px;
+      border-right: 1px solid #ffffff65;
+      background: #ffffff30;
+      backdrop-filter: blur(12px);
+    }
+    .brand-icon, .rail-button, .rail-avatar {
+      display: grid;
+      width: 29px;
+      height: 29px;
+      flex: 0 0 auto;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      color: #66705f;
+      background: #fff9;
+      font-size: 13px;
+    }
+    .brand-icon { margin-bottom: 5px; border-radius: 9px; color: #58654f; font-size: 16px; transform: rotate(-8deg); }
+    .rail-button { transition: .18s ease; }
+    .rail-button:hover, .rail-button.active { background: #fff; color: var(--green-dark); box-shadow: 0 3px 10px #273c2020; }
+    .rail-spacer { flex: 1; }
+    .rail-avatar { overflow: hidden; background: linear-gradient(145deg,#f4c49d,#708f58); color: white; font-size: 11px; font-weight: 700; }
+    .workspace { min-width: 0; padding: 19px 18px 14px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 39px; }
+    .tabs { display: flex; align-items: center; gap: 6px; }
+    .tab {
+      padding: 7px 12px;
+      border: 0;
+      border-radius: 20px;
+      background: #ffffff7a;
+      color: #667064;
+      font-size: 10px;
+      font-weight: 600;
+      transition: .18s ease;
+    }
+    .tab:hover { background: white; }
+    .tab.active { background: var(--coral); color: white; box-shadow: 0 3px 8px #e8836d45; }
+    .tiny-link { border: 0; background: transparent; color: #6e766c; font-size: 9px; white-space: nowrap; }
+    .hero { padding: 18px 7px 0; }
+    .hero-copy { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .hero h1 { margin: 0 0 3px; font-size: clamp(18px, 2.1vw, 25px); font-weight: 550; letter-spacing: -.6px; }
+    .hero p { margin: 0; color: #788071; font-size: 10px; }
+    .hero-chip { padding: 6px 9px; border: 1px solid #ffffff9c; border-radius: 20px; background: #fff7; color: #66705e; font-size: 9px; white-space: nowrap; }
+    .bus-scene {
+      position: relative;
+      min-height: 245px;
+      margin: 7px -18px 0;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, transparent 0 69%, #7f906f3d 70%, #f1e4cf80 100%),
+        radial-gradient(ellipse at 69% 77%, #a5b88070 0 13%, transparent 13.5%),
+        radial-gradient(ellipse at 89% 84%, #81976d70 0 18%, transparent 18.5%),
+        linear-gradient(180deg, #d6e5bd80, #e9d9c5a8);
+    }
+    .sun { position: absolute; top: 21px; right: 19%; width: 55px; height: 55px; border-radius: 50%; background: #fff3ce82; }
+    .cloud { position: absolute; top: 40px; left: 13%; width: 52px; height: 12px; border-radius: 20px; background: #fff9; }
+    .cloud::before, .cloud::after { position: absolute; bottom: 3px; width: 19px; height: 19px; border-radius: 50%; background: inherit; content: ""; }
+    .cloud::before { left: 7px; }
+    .cloud::after { left: 22px; width: 14px; height: 14px; }
+    .road { position: absolute; right: -5%; bottom: 21px; left: -5%; height: 28px; transform: rotate(-1deg); border-top: 3px solid #73746a45; background: #a6a19356; }
+    .bus-art {
+      position: absolute;
+      top: 74px;
+      left: 8%;
+      width: 84%;
+      height: 132px;
+      filter: drop-shadow(0 12px 7px #4144372b);
+      transform: skewY(-.4deg);
+    }
+    .bus-body {
+      position: absolute;
+      inset: 0 0 14px;
+      overflow: hidden;
+      border: 2px solid #656b63;
+      border-radius: 24px 33px 16px 18px;
+      background: linear-gradient(165deg,#fff 0 57%,#e9decb 58% 73%,#c4aa91 74% 100%);
+    }
+    .bus-body::after { position: absolute; top: 0; right: 0; width: 20px; height: 100%; border-radius: 0 29px 0 0; background: #d8d0bf70; content: ""; }
+    .windows { position: absolute; top: 8px; right: 22px; left: 10px; display: grid; height: 44px; grid-template-columns: repeat(7,1fr); gap: 3px; }
+    .windows span { border: 2px solid #555d5b; border-radius: 4px; background: linear-gradient(135deg,#667270,#87918d); }
+    .bus-stripe { position: absolute; top: 66px; right: 2px; left: 0; height: 20px; transform: skewY(-9deg); background: #c7b69f; }
+    .bus-door { position: absolute; top: 55px; right: 29px; width: 30px; height: 55px; border: 2px solid #737a74; border-radius: 4px 4px 0 0; background: #d8d9d0; }
+    .bus-front { position: absolute; top: 9px; left: -5px; width: 36px; height: 65px; border: 2px solid #5e655f; border-radius: 17px 5px 3px 12px; background: linear-gradient(160deg,#626e6a,#aab6ad 62%,#ece9da 64%); }
+    .wheel { position: absolute; bottom: 0; width: 31px; height: 31px; border: 6px solid #454947; border-radius: 50%; background: #c5c8bd; box-shadow: inset 0 0 0 3px #777b73; }
+    .wheel.one { left: 13%; }
+    .wheel.two { right: 18%; }
+    .route-card, .trending-card {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid #ffffffa3;
+      border-radius: 13px;
+      background: #ffffff91;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 16px #5443310c;
+    }
+    .route-card { margin-top: -1px; }
+    .route-part { min-width: 0; flex: 1; }
+    .route-part strong { display: block; overflow: hidden; color: #444c43; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .route-part small { display: block; margin-top: 3px; color: #8a8d80; font-size: 8px; }
+    .route-swap { display: grid; width: 24px; height: 24px; flex: 0 0 auto; place-items: center; border: 1px solid #e7e6d9; border-radius: 50%; background: #fff8; color: #71826a; }
+    .route-edit { display: grid; width: 26px; height: 26px; flex: 0 0 auto; place-items: center; border: 0; border-radius: 50%; background: #ffffffb0; color: #65705f; }
+    .journey-meta { display: flex; flex-wrap: wrap; gap: 15px; padding: 9px 5px 0; color: #575e52; font-size: 9px; }
+    .journey-meta strong { font-weight: 700; }
+    .trending-card { display: block; margin-top: 10px; padding: 10px 12px; }
+    .trending-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+    .trending-top strong { font-size: 10px; }
+    .trending-top button { border: 0; background: transparent; color: #777e70; }
+    .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+    .chip { padding: 4px 7px; border: 1px solid #e7e3d5; border-radius: 20px; background: #faf8ee; color: #73776c; font-size: 8px; cursor: pointer; }
+    .chip:hover { border-color: #78c978; color: #398b46; }
+
+    .booking-panel {
+      position: relative;
+      z-index: 1;
+      padding: 16px 15px 13px;
+      border-left: 1px solid #ffffff9c;
+      background: #fffcf4e8;
+      box-shadow: -8px 0 30px #5547350c;
+      backdrop-filter: blur(16px);
+    }
+    .booking-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .booking-top h2 { margin: 0; font-size: 13px; }
+    .bookmark { display: grid; width: 30px; height: 30px; place-items: center; border: 0; border-radius: 50%; background: #fff; color: #4b514b; font-size: 16px; box-shadow: 0 2px 8px #3332; }
+    .status-legend { display: flex; justify-content: space-between; gap: 4px; margin: 10px 0; }
+    .status-pill { display: inline-flex; align-items: center; gap: 4px; color: #747970; font-size: 8px; white-space: nowrap; }
+    .status-pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--status); }
+    .bus-select { width: 100%; margin: 1px 0 10px; padding: 8px 9px; border: 1px solid #ebe6d9; border-radius: 8px; background: #fffdf8; color: #52594f; font-size: 9px; }
+    .seat-head { display: flex; align-items: center; justify-content: space-between; margin: 0 1px 7px; }
+    .seat-head strong { font-size: 9px; }
+    .seat-head span { color: #8a8e83; font-size: 8px; }
+    .passenger-count { display: inline-flex; align-items: center; gap: 5px; color: #8a8e83; font-size: 8px; }
+    .passenger-select { padding: 3px 5px; border: 1px solid #e7e3d9; border-radius: 5px; background: #fffdf8; color: #50574e; font-size: 9px; }
+    .seat-map {
+      padding: 10px 9px 8px;
+      border: 1px solid #e8e4d7;
+      border-radius: 14px;
+      background: linear-gradient(145deg,#f6f0e3,#f0e4d3);
+    }
+    .seat-map-top { display: flex; align-items: center; justify-content: flex-end; padding: 0 4px 8px; border-bottom: 1px dashed #d5cbbb; color: #a39b8b; font-size: 8px; }
+    .steering { display: grid; width: 19px; height: 19px; place-items: center; border: 1px solid #c9c2b4; border-radius: 50%; background: #fffcf4; color: #77786f; font-size: 11px; }
+    .seats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 7px 6px; padding: 8px 1px 1px; }
+    .seat {
+      position: relative;
+      display: grid;
+      min-width: 0;
+      height: 24px;
+      place-items: center;
+      border: 1px solid #d7d2c8;
+      border-radius: 7px 7px 5px 5px;
+      background: #fffdfa;
+      color: #929187;
+      font-size: 7px;
+      box-shadow: inset 0 -3px 0 #e8e4db;
+      transition: .15s ease;
+    }
+    .seat:nth-child(4n + 1), .seat:nth-child(4n + 2) { margin-right: 4px; }
+    .seat:nth-child(4n + 3) { margin-left: 5px; }
+    .seat:hover:not(:disabled) { transform: translateY(-1px); border-color: var(--green); }
+    .seat.available-window { border-color: #ef9a72; background: #fff0e7; color: #d17a5c; box-shadow: inset 0 -3px 0 #f5d3c2; }
+    .seat.available-standard { border-color: #d2d6c9; background: #fff; color: #777f70; }
+    .seat.selected { border-color: #48b957; background: #4fbe5e; color: white; box-shadow: inset 0 -3px 0 #369b49; }
+    .seat:disabled { border-color: #dad8d0; background: #d8d8d0; color: #92948c; cursor: not-allowed; box-shadow: inset 0 -3px 0 #c9c9c1; }
+    .seat-gap { display: none; }
+    .seat-caption { display: flex; justify-content: space-between; gap: 5px; margin-top: 7px; color: #8a8b80; font-size: 8px; }
+    .fare-card { margin-top: 9px; padding: 9px 10px; border: 1px solid #eee9dc; border-radius: 10px; background: #fffdf8; }
+    .fare-top { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 5px; color: #85877d; font-size: 8px; }
+    .fare-top strong { color: #454b43; font-size: 10px; }
+    .fare-details { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; color: #7f8379; font-size: 8px; }
+    .fare-details span:nth-child(even) { color: #464d44; text-align: right; }
+    .buy-row { display: flex; align-items: center; gap: 8px; margin-top: 9px; }
+    .total { min-width: 0; flex: 1; }
+    .total small { display: block; color: #8a8e82; font-size: 8px; }
+    .total strong { display: block; margin-top: 2px; color: #3c463a; font-size: 14px; }
+    .buy-button { min-height: 34px; padding: 0 13px; border: 0; border-radius: 20px; background: linear-gradient(100deg,#6bcf65,#4cb859); box-shadow: 0 4px 9px #49b95b40; color: white; font-size: 9px; font-weight: 700; white-space: nowrap; }
+    .buy-button:hover { filter: brightness(1.04); transform: translateY(-1px); }
+    .booking-note { margin: 8px 1px 0; color: #99988e; font-size: 8px; line-height: 1.4; }
+
+    .modal-backdrop { position: fixed; inset: 0; z-index: 10; display: none; place-items: center; padding: 18px; background: #1318139c; backdrop-filter: blur(4px); }
+    .modal-backdrop.open { display: grid; }
+    .modal { width: min(420px,100%); padding: 22px; border: 1px solid #e9e5d9; border-radius: 17px; background: #fffdf7; box-shadow: 0 18px 70px #0005; }
+    .modal-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 17px; }
+    .modal-heading h2 { margin: 0; font-size: 17px; }
+    .close-modal { width: 29px; height: 29px; border: 0; border-radius: 50%; background: #f0eee5; color: #62675e; }
+    .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-field { display: grid; gap: 5px; }
+    .modal-field.full { grid-column: 1/-1; }
+    .modal-field label { color: #72776d; font-size: 10px; }
+    .modal-field input { min-width: 0; padding: 10px; border: 1px solid #e4e2d9; border-radius: 8px; background: white; }
+    .confirm-button { width: 100%; margin-top: 15px; padding: 11px; border: 0; border-radius: 8px; background: var(--green); color: white; font-weight: 700; }
+    .toast { position: fixed; right: 20px; bottom: 20px; z-index: 12; padding: 11px 15px; transform: translateY(12px); border-radius: 8px; background: #303a31; color: white; font-size: 12px; opacity: 0; pointer-events: none; transition: .2s; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .tab-view { display: none; }
+    .tab-view.active { display: block; }
+    .schedule-view { padding: 15px 8px; }
+    .schedule-view h2 { margin: 0 0 5px; font-size: 18px; }
+    .schedule-view > p { margin: 0 0 14px; color: #788071; font-size: 10px; }
+    .bus-option { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0; padding: 12px; border: 1px solid #ffffffb0; border-radius: 10px; background: #ffffff8c; }
+    .bus-option strong { display: block; font-size: 10px; }
+    .bus-option small { display: block; margin-top: 4px; color: #82877b; font-size: 8px; }
+    .bus-option button { padding: 7px 10px; border: 0; border-radius: 16px; background: #62c663; color: white; font-size: 8px; }
+    .schedule-view .route-card { margin-top: 15px; }
+    @media (min-width: 1100px) and (min-height: 760px) {
+      .app { min-height: min(800px, calc(100vh - 56px)); }
+      .bus-scene { min-height: 300px; }
+      .bus-art { top: 95px; height: 152px; }
+      .bus-body { bottom: 16px; }
+      .windows { height: 52px; }
+      .bus-stripe { top: 78px; }
+      .bus-door { top: 64px; height: 67px; }
+      .wheel { width: 36px; height: 36px; }
+      .booking-panel { padding: 21px 18px 16px; }
+      .seat { height: 28px; }
+      .seats { gap: 9px 7px; }
+      .seat-map { padding: 12px; }
+      .fare-card { margin-top: 12px; padding: 11px; }
+    }
+    @media (max-width: 850px) {
+      body { padding: 16px; }
+      .app { grid-template-columns: 47px minmax(0,1fr) 280px; min-height: 690px; }
+      .workspace { padding-right: 13px; padding-left: 13px; }
+      .bus-scene { margin-right: -13px; margin-left: -13px; }
+      .booking-panel { padding-right: 12px; padding-left: 12px; }
+      .tab { padding: 7px 9px; font-size: 9px; }
+    }
+    @media (max-width: 650px) {
+      body { display: block; padding: 0; background: #e9e7df; }
+      .app { width: 100%; min-height: 100vh; grid-template-columns: 42px minmax(0,1fr); overflow: visible; border: 0; border-radius: 0; }
+      .rail { grid-row: 1/3; min-height: 100vh; }
+      .workspace { padding: 12px 11px 16px; }
+      .topbar { align-items: flex-start; }
+      .tabs { flex-wrap: wrap; gap: 4px; }
+      .tab { padding: 7px 8px; }
+      .tiny-link { display: none; }
+      .hero { padding: 16px 3px 0; }
+      .hero-chip { display: none; }
+      .bus-scene { min-height: 205px; margin-right: -11px; margin-left: -11px; }
+      .bus-art { top: 65px; left: 5%; width: 90%; height: 118px; }
+      .route-card { flex-wrap: wrap; gap: 7px; padding: 9px; }
+      .route-part strong { font-size: 9px; }
+      .journey-meta { gap: 7px 11px; font-size: 8px; }
+      .booking-panel { grid-column: 2; border-top: 1px solid #ffffffb0; border-left: 0; padding: 14px 14px 19px; }
+      .seat-map { max-width: 340px; margin: auto; }
+      .seats { gap: 8px 10px; }
+      .seat { height: 30px; font-size: 8px; }
+      .status-legend { justify-content: flex-start; gap: 16px; }
+      .fare-card, .buy-row, .booking-top, .status-legend, .bus-select, .seat-head, .seat-caption { max-width: 360px; margin-right: auto; margin-left: auto; }
+      .booking-top { margin-bottom: 8px; }
+      .booking-note { max-width: 360px; margin-right: auto; margin-left: auto; }
+      .schedule-view { min-height: 370px; }
+    }
+    @media (max-width: 380px) {
+      .tab { padding: 7px 6px; font-size: 8px; }
+      .hero h1 { font-size: 17px; }
+      .route-card { gap: 5px; }
+      .route-part small { font-size: 7px; }
+      .journey-meta { gap: 7px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <aside class="rail" aria-label="Quick navigation">
+      <span class="brand-icon" aria-label="BusGo">♧</span>
+      <button class="rail-button active" aria-label="Tickets" title="Tickets">●</button>
+      <button class="rail-button" aria-label="Search" title="Search">⌕</button>
+      <button class="rail-button" aria-label="Trips" title="Trips">♧</button>
+      <button class="rail-button" aria-label="Saved routes" title="Saved routes">♡</button>
+      <button class="rail-button" aria-label="Help" title="Help">?</button>
+      <span class="rail-spacer"></span>
+      <button class="rail-button" aria-label="Settings" title="Settings">⚙</button>
+      <span class="rail-avatar" aria-label="Alex Morgan">A</span>
+    </aside>
+
+    <section class="workspace">
+      <header class="topbar">
+        <nav class="tabs" aria-label="Ticket sections">
+          <button class="tab active" type="button" data-view="tickets">Buy Tickets</button>
+          <button class="tab" type="button" data-view="schedules">Schedules</button>
+          <button class="tab" type="button" data-view="trips">Trips</button>
+          <button class="tab" type="button" data-view="vehicles">Vehicles</button>
+        </nav>
+        <button class="tiny-link" type="button" id="accountButton">◉ &nbsp;Your account&nbsp;⌄</button>
+      </header>
+
+      <div class="tab-view active" id="ticketsView">
+        <section class="hero">
+          <div class="hero-copy">
+            <div><h1>Shyamoli NR Travels</h1><p>173 · Non-AC · Business class</p></div>
+            <span class="hero-chip">✦ &nbsp; A smoother way to travel</span>
+          </div>
+        </section>
+
+        <div class="bus-scene" aria-label="Illustration of a coach travelling through a scenic landscape">
+          <div class="sun"></div><div class="cloud"></div><div class="road"></div>
+          <div class="bus-art" aria-hidden="true">
+            <div class="bus-body"><div class="windows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="bus-stripe"></div><div class="bus-door"></div></div>
+            <div class="bus-front"></div><div class="wheel one"></div><div class="wheel two"></div>
+          </div>
+        </div>
+
+        <section class="route-card" aria-label="Journey details">
+          <div class="route-part"><strong id="fromSummary">Dhaka-Kolhagong Counter</strong><small>Starting Point · 173</small></div>
+          <button class="route-swap" type="button" id="swapRoute" aria-label="Swap departure and destination">⇄</button>
+          <div class="route-part"><strong id="toSummary">Rangamati Bus Counter</strong><small>Destination · Bus stop</small></div>
+          <button class="route-edit" type="button" id="editRoute" aria-label="Edit journey details">↗</button>
+        </section>
+        <div class="journey-meta"><span><strong id="departureText">05:30 PM</strong> Departure time</span><span><strong>12:30 AM</strong> Arrival time</span><span><strong id="durationText">7h 00m</strong> Travel time</span><span><strong id="availableText">24</strong> Seats available</span><span><strong id="journeyDateText"></strong> Travel date</span></div>
+
+        <section class="trending-card">
+          <div class="trending-top"><strong>Related Trending Searches</strong><button type="button" aria-label="More searches">↗</button></div>
+          <div class="chips" id="trendingChips">
+            <button class="chip" type="button">Dhaka · Mymensingh</button><button class="chip" type="button">Dhaka · Sylhet</button><button class="chip" type="button">Dhaka · Chittagong</button><button class="chip" type="button">Dhaka · Rangamati</button><button class="chip" type="button">Dhaka · Cox's Bazar</button><button class="chip" type="button">Dhaka · Khulna</button>
+          </div>
+        </section>
+      </div>
+
+      <section class="tab-view schedule-view" id="schedulesView">
+        <h2>Choose your coach</h2><p>Compare departures and fares for your journey.</p>
+        <div id="busOptions"></div>
+        <section class="route-card"><div class="route-part"><strong id="fromSummarySchedule">Dhaka-Kolhagong Counter</strong><small>Departure counter</small></div><span class="route-swap">→</span><div class="route-part"><strong id="toSummarySchedule">Rangamati Bus Counter</strong><small>Arrival counter</small></div></section>
+      </section>
+      <section class="tab-view schedule-view" id="tripsView"><h2>Your trips</h2><p>Your selected coach and seats appear here. Complete a demo booking to see your reservation confirmation.</p><div class="bus-option"><div><strong id="tripSummary">No confirmed trips yet</strong><small>Your next journey is just a few clicks away.</small></div><button type="button" class="go-tickets">Find a trip</button></div></section>
+      <section class="tab-view schedule-view" id="vehiclesView"><h2>Travel in comfort</h2><p>Choose from verified coaches with comfortable seating and helpful onboard amenities.</p><div class="bus-option"><div><strong>Shyamoli NR Travels</strong><small>Non-AC · Business class · 32 seats</small></div><button type="button" class="go-tickets">Select</button></div><div class="bus-option"><div><strong>Green Line Express</strong><small>AC · Executive class · 28 seats</small></div><button type="button" class="choose-bus" data-bus="1">Select</button></div><div class="bus-option"><div><strong>Hanif Enterprise</strong><small>AC · Sleeper · 24 seats</small></div><button type="button" class="choose-bus" data-bus="2">Select</button></div></section>
+    </section>
+
+    <aside class="booking-panel" aria-label="Select your bus seats">
+      <div class="booking-top"><h2>Choose your seat</h2><button class="bookmark" type="button" id="bookmarkButton" aria-label="Save this journey" aria-pressed="false">♧</button></div>
+      <div class="status-legend">
+        <span class="status-pill"><i style="--status:#ef9774"></i>Window</span><span class="status-pill"><i style="--status:#fff;border:1px solid #cfd2c6"></i>Available</span><span class="status-pill"><i style="--status:#babcb4"></i>Booked</span><span class="status-pill"><i style="--status:#56bf61"></i>Selected</span>
+      </div>
+      <label class="seat-head" for="busSelect"><strong>Available buses</strong></label>
+      <select class="bus-select" id="busSelect" aria-label="Select bus">
+        <option value="0">Shyamoli NR Travels · 05:30 PM</option>
+        <option value="1">Green Line Express · 06:15 PM</option>
+        <option value="2">Hanif Enterprise · 08:00 PM</option>
+      </select>
+      <div class="seat-head"><strong>Pick your seat</strong><label class="passenger-count" for="passengerCount">Passengers <select class="passenger-select" id="passengerCount" aria-label="Passenger count"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></label></div>
+      <div class="seat-map">
+        <div class="seat-map-top"><span class="steering" aria-label="Driver">◉</span></div>
+        <div class="seats" id="seatGrid" role="group" aria-label="Bus seat map"></div>
+      </div>
+      <div class="seat-caption"><span>Front of bus</span><span id="seatsRemaining">32 seats remaining</span></div>
+      <div class="fare-card">
+        <div class="fare-top"><span id="fareBusName">Shyamoli NR Travels · Your seats</span><strong id="fareSeatCount">0 selected</strong></div>
+        <div class="fare-details"><span>Seat fare</span><span id="fareLine">৳ 0</span><span>Service charge</span><span id="feeLine">৳ 0</span></div>
+      </div>
+      <div class="buy-row"><div class="total"><small>Total price</small><strong id="totalLine">৳ 0</strong></div><button class="buy-button" type="button" id="buyButton">Buy Now&nbsp; →</button></div>
+      <p class="booking-note">Your seat is held for 10 minutes. Demo booking only — no payment will be collected.</p>
+    </aside>
+  </main>
+
+  <div class="modal-backdrop" id="passengerModal" role="presentation">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-heading"><h2 id="modalTitle">Passenger details</h2><button class="close-modal" type="button" id="closeModal" aria-label="Close">✕</button></div>
+      <form id="passengerForm">
+        <div class="modal-grid">
+          <div class="modal-field full"><label for="passengerName">Full name</label><input id="passengerName" required autocomplete="name" placeholder="Enter your full name"></div>
+          <div class="modal-field"><label for="passengerEmail">Email address</label><input id="passengerEmail" type="email" required autocomplete="email" placeholder="you@example.com"></div>
+          <div class="modal-field"><label for="passengerPhone">Phone number</label><input id="passengerPhone" type="tel" required autocomplete="tel" placeholder="+880 1XXX-XXXXXX"></div>
+        </div>
+        <button class="confirm-button" type="submit">Confirm demo booking</button>
+      </form>
+    </section>
+  </div>
+  <div class="modal-backdrop" id="routeModal" role="presentation">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="routeModalTitle">
+      <div class="modal-heading"><h2 id="routeModalTitle">Edit your journey</h2><button class="close-modal" type="button" id="closeRouteModal" aria-label="Close">✕</button></div>
+      <form id="routeForm">
+        <div class="modal-grid">
+          <div class="modal-field"><label for="routeFrom">From</label><input id="routeFrom" required maxlength="60"></div>
+          <div class="modal-field"><label for="routeTo">To</label><input id="routeTo" required maxlength="60"></div>
+          <div class="modal-field full"><label for="routeDate">Travel date</label><input id="routeDate" type="date" required></div>
+        </div>
+        <button class="confirm-button" type="submit">Update journey</button>
+      </form>
+    </section>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const buses = [
+      { id: 0, name: "Shyamoli NR Travels", type: "Non-AC · Business class", depart: "05:30 PM", arrive: "12:30 AM", duration: "7h 00m", fare: 1200, available: 24 },
+      { id: 1, name: "Green Line Express", type: "AC · Executive class", depart: "06:15 PM", arrive: "01:00 AM", duration: "6h 45m", fare: 1650, available: 26 },
+      { id: 2, name: "Hanif Enterprise", type: "AC · Sleeper", depart: "08:00 PM", arrive: "03:30 AM", duration: "7h 30m", fare: 1900, available: 26 }
+    ];
+    const bookedSeats = [[3, 8, 12, 17, 22, 26, 31, 2], [4, 6, 11, 19, 25, 30], [1, 7, 13, 18, 24, 29]];
+    const $ = (id) => document.getElementById(id);
+    let currentBus = buses[0];
+    let selectedSeats = [];
+    let toastTimer;
+    const localDate = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    $("routeDate").min = localDate;
+    $("routeDate").value = localDate;
+    $("journeyDateText").textContent = new Date(`${localDate}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+    function notify(message) {
+      const toast = $("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+    }
+
+    function renderSeats() {
+      const grid = $("seatGrid");
+      grid.replaceChildren();
+      for (let number = 1; number <= 32; number++) {
+        const seat = document.createElement("button");
+        seat.type = "button";
+        seat.className = "seat";
+        seat.textContent = String(number).padStart(2, "0");
+        seat.setAttribute("aria-label", `Seat ${number}${bookedSeats[currentBus.id].includes(number) ? ", booked" : ""}`);
+        seat.setAttribute("aria-pressed", String(selectedSeats.includes(number)));
+        if (bookedSeats[currentBus.id].includes(number)) {
+          seat.disabled = true;
+          seat.title = "Already booked";
+        } else if (selectedSeats.includes(number)) {
+          seat.classList.add("selected");
+        } else {
+          seat.classList.add(number % 4 === 1 || number % 4 === 0 ? "available-window" : "available-standard");
+        }
+        seat.addEventListener("click", () => {
+          if (selectedSeats.includes(number)) {
+            selectedSeats = selectedSeats.filter((item) => item !== number);
+          } else {
+            const limit = Number($("passengerCount").value);
+            if (selectedSeats.length >= limit) {
+              notify(`Choose up to ${limit} seats. Change the passenger count to select more.`);
+              return;
+            }
+            selectedSeats.push(number);
+          }
+          renderSeats();
+          updateFare();
+        });
+        grid.append(seat);
+      }
+    }
+
+    function updateFare() {
+      const fare = currentBus.fare * selectedSeats.length;
+      const serviceFee = selectedSeats.length ? 40 : 0;
+      $("fareLine").textContent = `৳ ${fare.toLocaleString("en-BD")}`;
+      $("feeLine").textContent = `৳ ${serviceFee.toLocaleString("en-BD")}`;
+      $("totalLine").textContent = `৳ ${(fare + serviceFee).toLocaleString("en-BD")}`;
+      $("fareSeatCount").textContent = `${selectedSeats.length} selected`;
+      $("seatsRemaining").textContent = `${currentBus.available - selectedSeats.length} seats remaining`;
+    }
+
+    function selectBus(id) {
+      currentBus = buses.find((bus) => bus.id === Number(id)) || buses[0];
+      selectedSeats = [];
+      $("busSelect").value = String(currentBus.id);
+      $("departureText").textContent = currentBus.depart;
+      $("durationText").textContent = currentBus.duration;
+      $("availableText").textContent = currentBus.available;
+      $("seatsRemaining").textContent = `${currentBus.available - selectedSeats.length} seats remaining`;
+      $("fareBusName").textContent = `${currentBus.name} · Your seats`;
+      renderSeats();
+      updateFare();
+    }
+
+    function setView(view) {
+      document.querySelectorAll(".tab").forEach((tab) => {
+        const active = tab.dataset.view === view;
+        tab.classList.toggle("active", active);
+        tab.setAttribute("aria-current", active ? "page" : "false");
+      });
+      document.querySelectorAll(".tab-view").forEach((panel) => panel.classList.remove("active"));
+      $(`${view}View`).classList.add("active");
+    }
+
+    function renderSchedules() {
+      const list = $("busOptions");
+      list.replaceChildren();
+      buses.forEach((bus) => {
+        const item = document.createElement("article");
+        item.className = "bus-option";
+        const detail = document.createElement("div");
+        const name = document.createElement("strong");
+        name.textContent = bus.name;
+        const info = document.createElement("small");
+        info.textContent = `${bus.depart} → ${bus.arrive} · ${bus.type} · ${bus.available} seats`;
+        const action = document.createElement("button");
+        action.type = "button";
+        action.textContent = `৳ ${bus.fare.toLocaleString("en-BD")} · Select`;
+        action.addEventListener("click", () => {
+          selectBus(bus.id);
+          setView("tickets");
+          notify(`${bus.name} selected`);
+        });
+        detail.append(name, info);
+        item.append(detail, action);
+        list.append(item);
+      });
+    }
+
+    $("busSelect").addEventListener("change", (event) => selectBus(event.target.value));
+    $("passengerCount").addEventListener("change", () => {
+      const limit = Number($("passengerCount").value);
+      selectedSeats = selectedSeats.slice(0, limit);
+      renderSeats();
+      updateFare();
+    });
+    $("passengerForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!$("passengerForm").reportValidity()) return;
+      $("tripSummary").textContent = `${currentBus.name} · Seats ${selectedSeats.slice().sort((a, b) => a - b).join(", ")} · ${$("totalLine").textContent}`;
+      $("passengerModal").classList.remove("open");
+      $("passengerForm").reset();
+      notify("Demo booking confirmed — no ticket or payment was created.");
+      setView("trips");
+    });
+    $("buyButton").addEventListener("click", () => {
+      if (!selectedSeats.length) {
+        notify("Choose at least one available seat first.");
+        return;
+      }
+      if (selectedSeats.length !== Number($("passengerCount").value)) {
+        notify(`Select exactly ${$("passengerCount").value} seat${$("passengerCount").value === "1" ? "" : "s"} for your passengers.`);
+        return;
+      }
+      $("passengerModal").classList.add("open");
+      $("passengerName").focus();
+    });
+    $("closeModal").addEventListener("click", () => $("passengerModal").classList.remove("open"));
+    $("passengerModal").addEventListener("click", (event) => {
+      if (event.target === $("passengerModal")) $("passengerModal").classList.remove("open");
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        $("passengerModal").classList.remove("open");
+        $("routeModal").classList.remove("open");
+      }
+    });
+    document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click", () => setView(tab.dataset.view)));
+    document.querySelectorAll(".go-tickets").forEach((button) => button.addEventListener("click", () => setView("tickets")));
+    document.querySelectorAll(".choose-bus").forEach((button) => button.addEventListener("click", () => {
+      selectBus(button.dataset.bus);
+      setView("tickets");
+      notify(`${currentBus.name} selected`);
+    }));
+    $("bookmarkButton").addEventListener("click", () => {
+      const saved = $("bookmarkButton").getAttribute("aria-pressed") !== "true";
+      $("bookmarkButton").setAttribute("aria-pressed", String(saved));
+      $("bookmarkButton").textContent = saved ? "♥" : "♧";
+      $("bookmarkButton").style.color = saved ? "#e67e69" : "";
+      notify(saved ? "Journey saved to your trips." : "Journey removed from saved trips.");
+    });
+    $("accountButton").addEventListener("click", () => notify("You’re browsing as a guest."));
+    $("editRoute").addEventListener("click", () => {
+      $("routeFrom").value = $("fromSummary").textContent;
+      $("routeTo").value = $("toSummary").textContent;
+      $("routeModal").classList.add("open");
+      $("routeFrom").focus();
+    });
+    $("closeRouteModal").addEventListener("click", () => $("routeModal").classList.remove("open"));
+    $("routeModal").addEventListener("click", (event) => {
+      if (event.target === $("routeModal")) $("routeModal").classList.remove("open");
+    });
+    $("routeForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!$("routeForm").reportValidity()) return;
+      const from = $("routeFrom").value.trim();
+      const to = $("routeTo").value.trim();
+      if (from.toLowerCase() === to.toLowerCase()) {
+        $("routeTo").setCustomValidity("Choose a different destination.");
+        $("routeTo").reportValidity();
+        $("routeTo").setCustomValidity("");
+        return;
+      }
+      $("fromSummary").textContent = from;
+      $("toSummary").textContent = to;
+      $("fromSummarySchedule").textContent = from;
+      $("toSummarySchedule").textContent = to;
+      $("journeyDateText").textContent = new Date(`${$("routeDate").value}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      $("routeModal").classList.remove("open");
+      notify("Journey details updated.");
+    });
+    $("swapRoute").addEventListener("click", () => {
+      const from = $("fromSummary").textContent;
+      $("fromSummary").textContent = $("toSummary").textContent;
+      $("toSummary").textContent = from;
+      $("fromSummarySchedule").textContent = $("fromSummary").textContent;
+      $("toSummarySchedule").textContent = $("toSummary").textContent;
+      notify("Journey direction switched.");
+    });
+    $("routeDate").addEventListener("change", (event) => {
+      if (event.target.value) $("journeyDateText").textContent = new Date(`${event.target.value}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    });
+    $("trendingChips").addEventListener("click", (event) => {
+      if (event.target.matches(".chip")) notify(`Showing popular route: ${event.target.textContent}`);
+    });
+    renderSchedules();
+    selectBus(0);
+  </script>
+</body>
+</html>

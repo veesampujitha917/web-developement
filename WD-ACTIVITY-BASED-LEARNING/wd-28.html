@@ -1,0 +1,636 @@
+﻿
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AccessHub - Login & Register</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 25px;
+    font-family: 'Poppins', Arial, sans-serif;
+    background: linear-gradient(120deg, #dce5ff, #c8d8ff);
+    color: #303039;
+}
+
+.container {
+    width: 100%;
+    max-width: 1100px;
+    min-height: 490px;
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    background: white;
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 18px 48px rgba(47, 66, 117, 0.18);
+}
+
+.welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    padding: 35px;
+    background: linear-gradient(145deg, #7e9cf0, #7190e8);
+    border-radius: 28px 145px 145px 28px;
+}
+
+.welcome h2 {
+    font-size: 2.1rem;
+    margin-bottom: 8px;
+}
+
+.welcome p {
+    font-size: 0.9rem;
+    margin-bottom: 22px;
+}
+
+.outline-btn {
+    min-width: 145px;
+    padding: 10px 20px;
+    color: white;
+    border: 1.5px solid white;
+    background: transparent;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.outline-btn:hover {
+    background: white;
+    color: #6685e3;
+}
+
+.form-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 55px;
+}
+
+.form-content {
+    width: 100%;
+    max-width: 360px;
+}
+
+.mobile-welcome {
+    display: none;
+}
+
+h1 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 25px;
+}
+
+.message {
+    min-height: 22px;
+    text-align: center;
+    font-size: 0.78rem;
+    color: #17854b;
+    margin-bottom: 10px;
+}
+
+.message.error {
+    color: #d94355;
+}
+
+.form-view {
+    display: none;
+}
+
+.form-view.active {
+    display: block;
+}
+
+.field {
+    margin-bottom: 17px;
+}
+
+.field label {
+    display: block;
+    font-size: 0.82rem;
+    margin-bottom: 7px;
+    color: #51515a;
+}
+
+.input-wrap {
+    position: relative;
+}
+
+.input-wrap input {
+    width: 100%;
+    padding: 13px 42px 13px 16px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: linear-gradient(145deg, #f6f6f7, #ededee);
+    outline: none;
+    font-family: inherit;
+    font-size: 0.85rem;
+}
+
+.input-wrap input:focus {
+    border-color: #8ba4f1;
+    box-shadow: 0 0 0 3px rgba(120, 149, 237, 0.2);
+    background: white;
+}
+
+.input-wrap span {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.form-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.remember {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.73rem;
+    color: #666a74;
+}
+
+.remember input {
+    accent-color: #7895ed;
+}
+
+.text-btn {
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: #555965;
+    font-size: 0.76rem;
+}
+
+.text-btn:hover {
+    color: #6685e3;
+    text-decoration: underline;
+}
+
+.primary-btn {
+    width: 100%;
+    padding: 13px;
+    color: white;
+    background: linear-gradient(110deg, #7c98ed, #6f8ce7);
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.primary-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 7px 16px rgba(110, 139, 230, 0.3);
+}
+
+.caption {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #565862;
+    margin: 18px 0 13px;
+}
+
+.socials {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.social-btn {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    background: white;
+    border: 1px solid #d7d7db;
+    border-radius: 9px;
+    font-weight: 700;
+    color: #303039;
+    cursor: pointer;
+}
+
+.social-btn:hover {
+    background: #f2f5ff;
+}
+
+.switch-text {
+    text-align: center;
+    font-size: 0.78rem;
+    margin-top: 20px;
+    color: #777b88;
+}
+
+.switch-text button {
+    border: none;
+    background: none;
+    color: #6685e3;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.note {
+    margin-top: 18px;
+    font-size: 0.65rem;
+    text-align: center;
+    color: #989aa3;
+    line-height: 1.6;
+}
+
+@media (max-width: 700px) {
+    body {
+        padding: 15px;
+    }
+
+    .container {
+        max-width: 440px;
+        grid-template-columns: 1fr;
+        min-height: auto;
+        border-radius: 22px;
+    }
+
+    .welcome {
+        display: none;
+    }
+
+    .form-panel {
+        padding: 25px 22px;
+    }
+
+    .mobile-welcome {
+        display: block;
+        text-align: center;
+        color: white;
+        background: linear-gradient(140deg, #7e9cf0, #7190e8);
+        margin: -25px -22px 25px;
+        padding: 23px 15px;
+        border-radius: 22px 22px 58px 58px;
+    }
+
+    .mobile-welcome h2 {
+        font-size: 1.35rem;
+        margin-bottom: 5px;
+    }
+
+    .mobile-welcome p {
+        font-size: 0.72rem;
+        margin-bottom: 12px;
+    }
+
+    .mobile-welcome .outline-btn {
+        min-width: 115px;
+        padding: 7px 18px;
+        font-size: 0.75rem;
+    }
+
+    h1 {
+        font-size: 1.65rem;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<main class="container">
+
+    <section class="welcome">
+        <h2 id="sideTitle">Hello, Welcome!</h2>
+        <p id="sideText">Don't have an account?</p>
+        <button class="outline-btn" id="sideButton" type="button">
+            Register
+        </button>
+    </section>
+
+    <section class="form-panel">
+        <div class="form-content">
+
+            <div class="mobile-welcome">
+                <h2 id="mobileTitle">Hello, Welcome!</h2>
+                <p id="mobileText">Don't have an account?</p>
+                <button class="outline-btn" id="mobileButton" type="button">
+                    Register
+                </button>
+            </div>
+
+            <div id="message" class="message" role="status" aria-live="polite"></div>
+
+            <!-- LOGIN FORM -->
+            <form id="loginForm" class="form-view active" novalidate>
+                <h1>Login</h1>
+
+                <div class="field">
+                    <label for="loginEmail">Username or email</label>
+                    <div class="input-wrap">
+                        <input id="loginEmail" type="text"
+                            placeholder="Username or email"
+                            autocomplete="username" required>
+                        <span aria-hidden="true">👤</span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="loginPassword">Password</label>
+                    <div class="input-wrap">
+                        <input id="loginPassword" type="password"
+                            placeholder="Password"
+                            autocomplete="current-password" required>
+                        <span aria-hidden="true">🔒</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label class="remember">
+                        <input type="checkbox" id="remember">
+                        Remember me
+                    </label>
+                    <button class="text-btn" type="button" data-view="recover">
+                        Forgot Password?
+                    </button>
+                </div>
+
+                <button class="primary-btn" type="submit">Login</button>
+
+                <p class="caption">or login with social platforms</p>
+
+                <div class="socials">
+                    <button class="social-btn" type="button" aria-label="Google demo">G</button>
+                    <button class="social-btn" type="button" aria-label="Facebook demo">f</button>
+                    <button class="social-btn" type="button" aria-label="GitHub demo">●</button>
+                    <button class="social-btn" type="button" aria-label="LinkedIn demo">in</button>
+                </div>
+
+                <p class="switch-text">
+                    Don't have an account?
+                    <button type="button" data-view="register">Register</button>
+                </p>
+            </form>
+
+            <!-- REGISTRATION FORM -->
+            <form id="registerForm" class="form-view" novalidate>
+                <h1>Register</h1>
+
+                <div class="field">
+                    <label for="fullName">Full name</label>
+                    <div class="input-wrap">
+                        <input id="fullName" type="text"
+                            placeholder="Enter your full name"
+                            autocomplete="name" required>
+                        <span aria-hidden="true">👤</span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="registerEmail">Email address</label>
+                    <div class="input-wrap">
+                        <input id="registerEmail" type="email"
+                            placeholder="you@example.com"
+                            autocomplete="email" required>
+                        <span aria-hidden="true">✉</span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="registerPassword">Password</label>
+                    <div class="input-wrap">
+                        <input id="registerPassword" type="password"
+                            placeholder="At least 8 characters"
+                            autocomplete="new-password" required>
+                        <span aria-hidden="true">🔒</span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="confirmPassword">Confirm password</label>
+                    <div class="input-wrap">
+                        <input id="confirmPassword" type="password"
+                            placeholder="Repeat your password"
+                            autocomplete="new-password" required>
+                        <span aria-hidden="true">🔒</span>
+                    </div>
+                </div>
+
+                <button class="primary-btn" type="submit">Create Account</button>
+
+                <p class="switch-text">
+                    Already have an account?
+                    <button type="button" data-view="login">Login</button>
+                </p>
+            </form>
+
+            <!-- PASSWORD RECOVERY FORM -->
+            <form id="recoverForm" class="form-view" novalidate>
+                <h1>Forgot Password?</h1>
+                <p class="caption">Enter your registered email address.</p>
+
+                <div class="field">
+                    <label for="recoverEmail">Email address</label>
+                    <div class="input-wrap">
+                        <input id="recoverEmail" type="email"
+                            placeholder="you@example.com"
+                            autocomplete="email" required>
+                        <span aria-hidden="true">✉</span>
+                    </div>
+                </div>
+
+                <button class="primary-btn" type="submit">Reset Password</button>
+
+                <p class="switch-text">
+                    <button type="button" data-view="login">Back to Login</button>
+                </p>
+            </form>
+
+            <p class="note">
+                Student account interface · Demo only<br>
+                Real authentication requires a secure backend.
+            </p>
+        </div>
+    </section>
+
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const USERS_KEY = "accessHubDemoUsers";
+
+function getUsers() {
+    try {
+        return JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
+    } catch {
+        return [];
+    }
+}
+
+function validEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function showMessage(text, error = false) {
+    $("message").textContent = text;
+    $("message").classList.toggle("error", error);
+}
+
+function showView(view) {
+    ["login", "register", "recover"].forEach(name => {
+        $(name + "Form").classList.toggle("active", name === view);
+    });
+
+    showMessage("");
+
+    const registering = view === "register";
+    const recovering = view === "recover";
+    const title = registering ? "Welcome Back!" : "Hello, Welcome!";
+    const copy = registering
+        ? "Already have an account?"
+        : recovering
+            ? "Let's get you back in."
+            : "Don't have an account?";
+    const buttonText = registering ? "Login" : "Register";
+
+    $("sideTitle").textContent = title;
+    $("mobileTitle").textContent = title;
+    $("sideText").textContent = copy;
+    $("mobileText").textContent = copy;
+    $("sideButton").textContent = buttonText;
+    $("mobileButton").textContent = buttonText;
+
+    $("sideButton").dataset.view = registering ? "login" : "register";
+    $("mobileButton").dataset.view = registering ? "login" : "register";
+
+    $("sideButton").style.visibility = recovering ? "hidden" : "visible";
+    $("mobileButton").style.visibility = recovering ? "hidden" : "visible";
+}
+
+document.addEventListener("click", event => {
+    const button = event.target.closest("[data-view]");
+    if (button) showView(button.dataset.view);
+});
+
+$("registerForm").addEventListener("submit", event => {
+    event.preventDefault();
+
+    const name = $("fullName").value.trim();
+    const email = $("registerEmail").value.trim().toLowerCase();
+    const password = $("registerPassword").value;
+    const confirm = $("confirmPassword").value;
+
+    if (name.length < 2)
+        return showMessage("Please enter your full name.", true);
+
+    if (!validEmail(email))
+        return showMessage("Please enter a valid email address.", true);
+
+    if (password.length < 8 ||
+        !/[A-Za-z]/.test(password) ||
+        !/\d/.test(password)) {
+        return showMessage(
+            "Use at least 8 characters, including a letter and a number.",
+            true
+        );
+    }
+
+    if (password !== confirm)
+        return showMessage("Passwords do not match.", true);
+
+    const users = getUsers();
+
+    if (users.some(user => user.email === email))
+        return showMessage("This email is already registered.", true);
+
+    // Demo storage only. Never store real passwords this way.
+    users.push({ name, email, password });
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+
+    showView("login");
+    $("loginEmail").value = email;
+    showMessage("Demo account created! You can now log in.");
+});
+
+$("loginForm").addEventListener("submit", event => {
+    event.preventDefault();
+
+    const login = $("loginEmail").value.trim().toLowerCase();
+    const password = $("loginPassword").value;
+
+    if (!login || !password)
+        return showMessage("Enter your username/email and password.", true);
+
+    const user = getUsers().find(item =>
+        (item.email === login || item.name.toLowerCase() === login) &&
+        item.password === password
+    );
+
+    if (!user)
+        return showMessage("Account not found. Please register first.", true);
+
+    const session = JSON.stringify({
+        name: user.name,
+        email: user.email
+    });
+
+    if ($("remember").checked) {
+        localStorage.setItem("accessHubDemoSession", session);
+    } else {
+        sessionStorage.setItem("accessHubDemoSession", session);
+    }
+
+    showMessage("Welcome, " + user.name + "! Demo login successful.");
+});
+
+$("recoverForm").addEventListener("submit", event => {
+    event.preventDefault();
+
+    const email = $("recoverEmail").value.trim().toLowerCase();
+
+    if (!validEmail(email))
+        return showMessage("Please enter a valid email address.", true);
+
+    const exists = getUsers().some(user => user.email === email);
+
+    showMessage(
+        exists
+            ? "Demo only: no reset email was sent. A backend email service is required."
+            : "If this account exists, a real service would send reset instructions."
+    );
+});
+
+try {
+    const session = JSON.parse(
+        localStorage.getItem("accessHubDemoSession") || "null"
+    );
+
+    if (session && session.email) {
+        $("loginEmail").value = session.email;
+    }
+} catch {
+    // Ignore invalid demo session data.
+}
+
+showView("login");
+</script>
+
+</body>
+</html>
